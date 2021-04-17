@@ -10,8 +10,10 @@ use super::mutex::Mutex;
 
 /// ```rust
 /// let mut mutex = ContentMutex::new(5);
-/// let ctx = mutex.lock();
-/// *ctx = 2;
+/// {
+///     let ctx = mutex.lock();
+///     *ctx = 2;
+/// }
 /// ```
 /// ## 内容锁
 /// 借用临时变量进行解锁操作，减少代码量，确保百分百解锁

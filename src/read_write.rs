@@ -8,6 +8,16 @@ use crate::mutex::Mutex;
 
 /// ## 读写锁
 /// 允许多个读取，一个写入
+/// ```rust
+/// let mut rw = ReadWriteMutex::new();
+/// rw.read();
+/// rw.read();
+/// rw.unlock();
+/// rw.unlock();
+/// 
+/// rw.write();
+/// rw.unlock();
+/// ```
 pub struct ReadWriteMutex{
     mutex : Mutex,
     read_cnt : usize,
@@ -22,12 +32,15 @@ impl ReadWriteMutex{
             write : false,
         }
     }
+
     pub fn read(&mut self) {
         while !self.lock_read(){}
     }
+
     pub fn write(&mut self) {
         while !self.lock_write(){}
     }
+
     pub fn unlock(&mut self){
         self.mutex.lock();
         if self.write{
@@ -38,6 +51,7 @@ impl ReadWriteMutex{
         }
         self.mutex.unlock();
     }
+
     fn lock_read(&mut self) ->bool {
         self.mutex.lock();
         let rt = !self.write;
@@ -47,6 +61,7 @@ impl ReadWriteMutex{
         self.mutex.unlock();
         rt
     }
+
     fn lock_write(&mut self)->bool{
         self.mutex.lock();
         let rt = self.read_cnt == 0 && !self.write;

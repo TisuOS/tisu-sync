@@ -1,8 +1,13 @@
+#![allow(unused_assignments)]
 use crate::mutex::MutexState;
 
 
 /// ## 同步布尔值
-/// 目前主要用于循环判断
+/// 确保内部布尔值原子操作
+/// ```rust
+/// let mut b = Bool::new();
+/// b.set(false);
+/// ```
 pub struct Bool {
     state : MutexState,
 }
@@ -14,12 +19,26 @@ impl Bool {
             state : MutexState::Unlock,
         }
     }
+
+    pub fn set(&mut self, val : bool) {
+        match val {
+            true => self.set_true(),
+            false => self.set_false(),
+        }
+    }
+
     /// ### 获取并置为 unlock（false）
     pub fn pop(&mut self)->bool {
         unsafe {
-            let state : MutexState;
-            llvm_asm!("amoswap.w.aq $0, $1, ($2)\n" : "=r"(state) : "r"(0), "r"(self) :: "volatile");
-            match state {
+            let mut state = 0;
+            let mut addr = self as *mut Self as usize;
+            asm!(
+                "amoswap.w.aq {rev}, {rd}, ({rs})",
+                rev = out(reg) state,
+                rd = in(reg) state,
+                rs = inout(reg) addr
+            );
+            match MutexState::from(state) {
                 MutexState::Lock => {true}
                 MutexState::Unlock => {false}
             }
@@ -28,9 +47,14 @@ impl Bool {
 
     pub fn get_val(&mut self)->bool {
         unsafe {
-            let state : MutexState;
-            llvm_asm!("amoor.w.aq $0, $1, ($2)" : "=r"(state) : "r"(0), "r"(self) :: "volatile");
-            match state {
+            let mut state = 0;
+            let mut addr = self as *mut Self as usize;
+            asm!(
+                "amoor.w.aq {rt}, zero, ({val})",
+                rt = out(reg)state,
+                val = inout(reg)addr
+            );
+            match MutexState::from(state) {
                 MutexState::Unlock => {false}
                 MutexState::Lock => {true}
             }
@@ -39,15 +63,24 @@ impl Bool {
     /// ### 置为 lock（true）
     pub fn set_true(&mut self) {
         unsafe {
-            let state = &mut self.state;
-            llvm_asm!("amoswap.w.rl zero, $1, ($0)" :: "r"(state), "r"(1) :: "volatile");
+            let mut addr = &mut self.state as *mut MutexState as usize;
+            asm!(
+                "amoswap.w.rl zero, {v}, ({state})",
+                state = inout(reg)addr,
+                v = in(reg) 1,
+            );
         }
     }
 
     pub fn set_false(&mut self) {
         unsafe {
             let state = &mut self.state;
-            llvm_asm!("amoswap.w.rl zero, $1, ($0)" :: "r"(state), "r"(0) :: "volatile");
+            let mut addr = state as *mut MutexState as usize;
+            asm!(
+                "amoswap.w.rl zero, {v}, ({state})",
+                state = inout(reg)addr,
+                v = in(reg)0
+            );
         }
     }
 }
