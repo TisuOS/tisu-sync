@@ -12,6 +12,7 @@ pub enum MutexState{
     Unlock = 0,
     Lock = 1,
 }
+
 impl MutexState {
     pub fn val(self)->usize{
         self as usize
@@ -43,6 +44,7 @@ pub struct MultiMutex {
 /// mutex.unlock();
 /// ```
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Mutex{
     pub state : MutexState,
 }
