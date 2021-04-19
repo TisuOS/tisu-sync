@@ -1,5 +1,5 @@
 #![allow(unused_assignments)]
-use crate::mutex::MutexState;
+use crate::spin_mutex::MutexState;
 
 
 /// ## 同步布尔值

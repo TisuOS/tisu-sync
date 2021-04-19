@@ -26,68 +26,26 @@ impl MutexState {
         }
     }
 }
-/// ## 多重锁
-/// 多重锁，允许一个核心多次上锁，这是为了解决单重锁在多重函数中反复上锁的需求,后期应当避免使用此锁
-#[repr(C)]
-pub struct MultiMutex {
-    mutex : Mutex,
-    cnt : usize,
-    hartid : usize,
-}
 
 /// ## 自旋锁
-/// 提供更加细致的可自定义的功能，不要将它与标准库的 Mutex 搞混
+/// 提供更加细致的可自定义的功能，不要将它与标准库的 SpinMutex 搞混
 /// ```rust
-/// let mut mutex = Mutex::new();
+/// let mut mutex = SpinMutex::new();
 /// mutex.lock();
 /// // do something
 /// mutex.unlock();
 /// ```
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct Mutex{
+pub struct SpinMutex{
     pub state : MutexState,
 }
 
-/// 上锁原理：
-/// 传入上锁的 CPU 核心号，每次上锁进行计数，当锁存在且不属于当前 CPU 时，阻塞
-impl MultiMutex {
-    pub const fn new() -> Self {
-        MultiMutex {
-            mutex : Mutex::new(),
-            hartid : 1000,
-            cnt : 0,
-        }
-    }
-    pub fn lock(&mut self, hartid : usize) {
-        // 已经上锁且核心不同
-        while !self.lock_state(hartid){}
-    }
-    pub fn unlock(&mut self){
-        self.mutex.lock();
-        self.cnt -= 1;
-        if self.cnt == 0{
-            self.hartid = 1000;
-        }
-        self.mutex.unlock();
-    }
-    fn lock_state(&mut self, hartid : usize) ->bool {
-        self.mutex.lock();
-        let rt = self.cnt == 0 || hartid == self.hartid;
-        if rt {
-            self.hartid = hartid;
-            self.cnt += 1;
-        }
-        self.mutex.unlock();
-        rt
-    }
-}
-
 /// 通过 原子 swap 实现
-impl Mutex{
+impl SpinMutex{
     #[allow(dead_code)]
     pub const fn new() -> Self {
-        Mutex {
+        SpinMutex {
             state : MutexState::Unlock,
         }
     }

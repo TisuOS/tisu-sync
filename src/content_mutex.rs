@@ -6,7 +6,7 @@
 #![allow(dead_code)]
 use core::ops::{Deref, DerefMut};
 
-use super::mutex::Mutex;
+use super::spin_mutex::SpinMutex;
 
 /// ```rust
 /// let mut mutex = ContentMutex::new(5);
@@ -19,14 +19,14 @@ use super::mutex::Mutex;
 /// 借用临时变量进行解锁操作，减少代码量，确保百分百解锁
 pub struct ContentMutex<T> {
     pub value : T,
-    pub mutex : Mutex,
+    pub mutex : SpinMutex,
 }
 
 impl<T> ContentMutex<T> {
     pub const fn new(value : T)->Self {
         Self {
             value,
-            mutex : Mutex::new(),
+            mutex : SpinMutex::new(),
         }
     }
 
@@ -51,7 +51,7 @@ impl<T:Clone> Clone for ContentMutex<T> {
     fn clone(&self) -> Self {
         Self {
             value : self.value.clone(),
-            mutex: Mutex::new(),
+            mutex: SpinMutex::new(),
         }
     }
 }

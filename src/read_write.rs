@@ -4,7 +4,7 @@
 
 #![allow(dead_code)]
 
-use crate::mutex::Mutex;
+use crate::spin_mutex::SpinMutex;
 
 /// ## 读写锁
 /// 允许多个读取，一个写入
@@ -19,7 +19,7 @@ use crate::mutex::Mutex;
 /// rw.unlock();
 /// ```
 pub struct ReadWriteMutex{
-    mutex : Mutex,
+    mutex : SpinMutex,
     read_cnt : usize,
     write : bool,
 }
@@ -27,7 +27,7 @@ pub struct ReadWriteMutex{
 impl ReadWriteMutex{
     pub const fn new()->Self{
         Self{
-            mutex : Mutex::new(),
+            mutex : SpinMutex::new(),
             read_cnt : 0,
             write : false,
         }

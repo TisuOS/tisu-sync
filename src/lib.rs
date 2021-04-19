@@ -8,12 +8,12 @@
     asm
 )]
 
-mod mutex;
+mod spin_mutex;
 mod read_write;
-mod content;
+mod content_mutex;
 mod mutex_bool;
 
-pub use mutex::Mutex;
-pub use content::ContentMutex;
+pub use spin_mutex::SpinMutex;
+pub use content_mutex::ContentMutex;
 pub use read_write::ReadWriteMutex;
 pub use mutex_bool::Bool;
