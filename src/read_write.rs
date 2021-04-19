@@ -8,16 +8,6 @@ use crate::spin_mutex::SpinMutex;
 
 /// ## 读写锁
 /// 允许多个读取，一个写入
-/// ```rust
-/// let mut rw = ReadWriteMutex::new();
-/// rw.read();
-/// rw.read();
-/// rw.unlock();
-/// rw.unlock();
-/// 
-/// rw.write();
-/// rw.unlock();
-/// ```
 pub struct ReadWriteMutex{
     mutex : SpinMutex,
     read_cnt : usize,

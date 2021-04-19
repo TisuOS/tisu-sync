@@ -49,12 +49,16 @@ impl SpinMutex{
             state : MutexState::Unlock,
         }
     }
-    pub fn lock(&mut self) {
-        while !self.lock_state() {}
-    }
-    pub fn unlock(&mut self){
+    pub fn lock(&self) {
         unsafe {
-            let mut addr = &mut self.state as *mut MutexState as usize;
+            let t = self as *const Self as *mut Self;
+            while !(*t).lock_state() {}
+        }
+    }
+    pub fn unlock(&self){
+        unsafe {
+            let t = self as *const Self as *mut Self;
+            let mut addr = &mut (*t).state as *mut MutexState as usize;
             asm!(
                 "amoswap.w.rl zero, zero, ({state})",
                 state = inout(reg)addr

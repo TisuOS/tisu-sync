@@ -30,11 +30,11 @@ impl<T> ContentMutex<T> {
         }
     }
 
-    pub fn raw_lock(&mut self) {
+    pub fn raw_lock(&self) {
         self.mutex.lock();
     }
 
-    pub fn unlock(&mut self) {
+    pub fn unlock(&self) {
         self.mutex.unlock();
     }
 
