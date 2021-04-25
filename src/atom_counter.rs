@@ -17,10 +17,13 @@ impl AtomCounter {
         }
     }
 
-    pub fn add(&mut self) {
+    /// 自增 1 并返回原来的值
+    pub fn add(&mut self)->usize {
         self.mutex.lock();
+        let rt = self.cnt;
         self.cnt = self.cnt.wrapping_add(1);
         self.mutex.unlock();
+        rt
     }
 
     pub fn get(&self)->usize {
