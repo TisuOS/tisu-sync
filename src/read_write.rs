@@ -12,14 +12,17 @@ pub struct ReadWriteMutex{
     mutex : SpinMutex,
     read_cnt : usize,
     write : bool,
+    core : bool,
 }
 
 impl ReadWriteMutex{
-    pub const fn new()->Self{
+    /// core = true 意味着在临界区内禁用中断
+    pub const fn new(core : bool)->Self{
         Self{
             mutex : SpinMutex::new(),
             read_cnt : 0,
             write : false,
+            core
         }
     }
 
@@ -43,22 +46,42 @@ impl ReadWriteMutex{
     }
 
     fn lock_read(&mut self) ->bool {
-        self.mutex.lock();
+        if self.core {
+            self.mutex.lock_no_int();
+        }
+        else {
+            self.mutex.lock();
+        }
         let rt = !self.write;
         if rt {
             self.read_cnt += 1;
         }
-        self.mutex.unlock();
+        if self.core {
+            self.mutex.unlock_no_int();
+        }
+        else {
+            self.mutex.unlock();
+        }
         rt
     }
 
     fn lock_write(&mut self)->bool{
-        self.mutex.lock();
+        if self.core {
+            self.mutex.lock_no_int();
+        }
+        else {
+            self.mutex.lock();
+        }
         let rt = self.read_cnt == 0 && !self.write;
         if rt {
             self.write = true;
         }
-        self.mutex.unlock();
+        if self.core {
+            self.mutex.unlock_no_int();
+        }
+        else {
+            self.mutex.unlock();
+        }
         rt
     }
 
