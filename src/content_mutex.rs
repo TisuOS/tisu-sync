@@ -8,6 +8,7 @@ use core::ops::{Deref, DerefMut};
 
 use super::spin_mutex::SpinMutex;
 
+
 /// ```rust
 /// let mut mutex = ContentMutex::new(5);
 /// {
@@ -20,28 +21,46 @@ use super::spin_mutex::SpinMutex;
 pub struct ContentMutex<T> {
     pub value : T,
     pub mutex : SpinMutex,
+    pub core : bool,
 }
 
 impl<T> ContentMutex<T> {
-    pub const fn new(value : T)->Self {
+    /// 核心锁将在上锁前屏蔽 S 模式中断，解锁后恢复
+    pub const fn new(value : T, core : bool)->Self {
         Self {
             value,
             mutex : SpinMutex::new(),
+            core,
         }
     }
 
     pub fn raw_lock(&self) {
-        self.mutex.lock();
+        if !self.core {
+            self.mutex.lock();
+        }
+        else {
+            self.mutex.supervisor_lock();
+        }
     }
 
     pub fn unlock(&self) {
-        self.mutex.unlock();
+        if self.core {
+            self.mutex.supervisor_unlock();
+        }
+        else {
+            self.mutex.unlock();
+        }
     }
 
     pub fn lock(&self)->Content<T> {
         unsafe {
             let t = self as *const Self as *mut Self;
-            (*t).mutex.lock();
+            if self.core {
+                self.mutex.supervisor_lock();
+            }
+            else {
+                self.mutex.lock();
+            }
             Content::new(&mut *t)
         }
     }
@@ -52,6 +71,7 @@ impl<T:Clone> Clone for ContentMutex<T> {
         Self {
             value : self.value.clone(),
             mutex: SpinMutex::new(),
+            core : self.core,
         }
     }
 }
