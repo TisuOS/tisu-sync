@@ -39,13 +39,13 @@ impl<T> ContentMutex<T> {
             self.mutex.lock();
         }
         else {
-            self.mutex.supervisor_lock();
+            self.mutex.lock_no_int();
         }
     }
 
     pub fn unlock(&self) {
         if self.core {
-            self.mutex.supervisor_unlock();
+            self.mutex.unlock_no_int();
         }
         else {
             self.mutex.unlock();
@@ -56,7 +56,7 @@ impl<T> ContentMutex<T> {
         unsafe {
             let t = self as *const Self as *mut Self;
             if self.core {
-                self.mutex.supervisor_lock();
+                self.mutex.lock_no_int();
             }
             else {
                 self.mutex.lock();
