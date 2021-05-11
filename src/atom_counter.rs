@@ -32,4 +32,12 @@ impl AtomCounter {
         self.mutex.unlock();
         rt
     }
+
+    pub fn div(&mut self)->usize {
+        self.mutex.lock();
+        let rt = self.cnt;
+        self.cnt = self.cnt.wrapping_div(1);
+        self.mutex.unlock();
+        rt
+    }
 }
