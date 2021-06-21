@@ -1,6 +1,6 @@
 [package]
 name = "tisu-sync"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["1363558876@qq.com <1363558876@qq.com>"]
 edition = "2018"
 

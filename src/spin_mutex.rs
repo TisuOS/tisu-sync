@@ -12,17 +12,6 @@
 #![allow(unused_assignments)]
 #![allow(dead_code)]
 
-const CLOSE_INT : usize = 25;
-const OPEN_INT  : usize = 26;
-
-fn syscall(num : usize) {
-    unsafe{
-        asm!("
-            mv  a0, {n}
-            ecall
-        ", n = in(reg)num);
-    }
-}
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
@@ -167,8 +156,3 @@ impl SpinMutex{
         }
     }
 }
-
-
-
-
-// use crate::uart;
