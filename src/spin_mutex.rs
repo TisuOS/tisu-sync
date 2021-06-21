@@ -57,7 +57,6 @@ impl MutexState {
 #[derive(Clone, Copy)]
 pub struct SpinMutex{
     pub state : MutexState,
-    status : usize,
 }
 
 /// 通过 原子 swap 实现
@@ -66,7 +65,6 @@ impl SpinMutex{
     pub const fn new() -> Self {
         SpinMutex {
             state : MutexState::Unlock,
-            status : 0,
         }
     }
 
@@ -81,10 +79,6 @@ impl SpinMutex{
         unsafe {
             let t = self as *const Self as *mut Self;
             while !(*t).lock_state_no_int() {}
-            asm!("
-                li t0, 1
-                csrs sscratch, t0
-            ");
         }
     }
 
@@ -124,10 +118,6 @@ impl SpinMutex{
         unsafe {
             let t = self as *const Self as *mut Self;
             let mut addr = &mut (*t).state as *mut MutexState as usize;
-            asm!("
-                li t0, 1
-                csrc sscratch, t0
-            ");
             asm!(
                 "amoswap.w.rl zero, zero, ({state})",
                 state = inout(reg)addr
@@ -160,29 +150,24 @@ impl SpinMutex{
     }
 
     fn close_int(&mut self) {
-        if !can() {
-            return;
+        unsafe {
+            asm!("
+                li  t0, 0x22
+                csrc sie, t0
+            ");
         }
-        syscall(CLOSE_INT);
     }
 
     fn open_int(&self) {
-        if !can() {
-            return;
+        unsafe {
+            asm!("
+                li  t0, 0x22
+                csrs sie, t0
+            ");
         }
-        syscall(OPEN_INT);
     }
 }
 
-fn can()->bool {
-    unsafe{
-        let mut sscratch = 0;
-        asm!("
-            csrr {rt}, sscratch
-        ", rt=out(reg)sscratch);
-        sscratch & 2 != 0
-    }
-}
 
 
 
